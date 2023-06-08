@@ -1,12 +1,12 @@
 use cosmwasm_std::{Addr, Coin, Empty, Uint128};
 use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
-use cw_subscription_hub::msg::{ExecuteMsg, InstantiateMsg};
+use subscription_hub::msg::{ExecuteMsg, InstantiateMsg};
 
-pub fn cw_subscription_hub() -> Box<dyn Contract<Empty>> {
+pub fn subscription_hub() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        cw_subscription_hub::contract::execute,
-        cw_subscription_hub::contract::instantiate,
-        cw_subscription_hub::contract::query,
+        subscription_hub::contract::execute,
+        subscription_hub::contract::instantiate,
+        subscription_hub::contract::query,
     );
     Box::new(contract)
 }
@@ -106,7 +106,7 @@ pub fn mock_app() -> App {
 }
 
 pub fn proper_instantiate(app: &mut App, admin: &str) -> Addr {
-    let code_id = app.store_code(cw_subscription_hub());
+    let code_id = app.store_code(subscription_hub());
     app.instantiate_contract(
         code_id,
         Addr::unchecked(admin),

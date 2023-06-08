@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
-use cw_subscription_hub::{
+use subscription_hub::{
     msg::{ExecuteMsg, QueryMsg},
     state::Organization,
 };

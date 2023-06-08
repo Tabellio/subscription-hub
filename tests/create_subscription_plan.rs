@@ -3,7 +3,7 @@ use helpers::*;
 
 use cosmwasm_std::{Addr, Uint128};
 use cw_multi_test::Executor;
-use cw_subscription_hub::{
+use subscription_hub::{
     msg::{ExecuteMsg, QueryMsg},
     state::{DurationUnit, SubscriptionPlan},
 };

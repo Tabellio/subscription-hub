@@ -1,5 +1,5 @@
 [package]
-name = "cw-subscription-hub"
+name = "subscription-hub"
 version = "0.1.0"
 authors = ["findolor <findolor@tabellio.io>"]
 edition = "2021"

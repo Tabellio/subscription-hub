@@ -5,6 +5,15 @@ use cosmwasm_std::{Addr, Timestamp, Uint128};
 use cw_storage_plus::{Item, Map};
 
 #[cw_serde]
+pub struct Config {
+    // The address of the contract admin
+    pub admin: Addr,
+}
+
+// The config key is used to store the contract's configuration
+pub const CONFIG: Item<Config> = Item::new("config");
+
+#[cw_serde]
 pub struct Organization {
     // The address of the organization's owner
     pub owner: Addr,
@@ -19,13 +28,13 @@ pub struct Organization {
 }
 
 // The organization_id is the primary key for the organization
-const ORGANIZATION_ID: Item<u32> = Item::new("organization_id");
+pub const ORGANIZATION_ID: Item<u32> = Item::new("organization_id");
 
 // The organizations map stores the organization_id -> organization
-const ORGANIZATIONS: Map<u32, Organization> = Map::new("organizations");
+pub const ORGANIZATIONS: Map<u32, Organization> = Map::new("organizations");
 
 // The user_organizations map stores the user -> organization_id
-const USER_ORGANIZATIONS: Map<Addr, Vec<u32>> = Map::new("user_organizations");
+pub const USER_ORGANIZATIONS: Map<Addr, Vec<u32>> = Map::new("user_organizations");
 
 #[cw_serde]
 pub enum DurationUnit {
@@ -60,13 +69,13 @@ pub struct SubscriptionPlan {
 }
 
 // The subscription_plan_id is the primary key for the subscription plan
-const SUBSCRIPTION_PLAN_ID: Item<u64> = Item::new("plan_id");
+pub const SUBSCRIPTION_PLAN_ID: Item<u64> = Item::new("plan_id");
 
 // The subscription_plans map stores the subscription_plan_id -> subscription_plan
-const SUBSCRIPTION_PLANS: Map<u64, SubscriptionPlan> = Map::new("subscription_plans");
+pub const SUBSCRIPTION_PLANS: Map<u64, SubscriptionPlan> = Map::new("subscription_plans");
 
 // The organization_subscription_plans map stores the organization_id -> subscription_plan_id
-const ORGANIZATION_SUBSCRIPTION_PLANS: Map<u32, Vec<u64>> =
+pub const ORGANIZATION_SUBSCRIPTION_PLANS: Map<u32, Vec<u64>> =
     Map::new("organization_subscription_plans");
 
 #[cw_serde]
@@ -82,14 +91,14 @@ pub struct Subscription {
 }
 
 // The subscription_id is the primary key for the subscription
-const SUBSCRIPTION_ID: Item<u64> = Item::new("subscription_id");
+pub const SUBSCRIPTION_ID: Item<u64> = Item::new("subscription_id");
 
 // The subscriptions map stores the subscription_id -> subscription
-const SUBSCRIPTIONS: Map<u64, Subscription> = Map::new("subscriptions");
+pub const SUBSCRIPTIONS: Map<u64, Subscription> = Map::new("subscriptions");
 
 // The subscriber_subscriptions map stores the subscriber -> subscription_id
-const SUBSCRIBER_SUBSCRIPTIONS: Map<Addr, Vec<u64>> = Map::new("subscriber_subscriptions");
+pub const SUBSCRIBER_SUBSCRIPTIONS: Map<Addr, Vec<u64>> = Map::new("subscriber_subscriptions");
 
 // The subscription_plan_subscriptions map stores the subscription_plan_id and subscriber -> subscription_id
-const SUBSCRIPTION_PLAN_SUBSCRIPTIONS: Map<(u64, Addr), u64> =
+pub const SUBSCRIPTION_PLAN_SUBSCRIPTIONS: Map<(u64, Addr), u64> =
     Map::new("subscription_plan_subscriptions");

@@ -5,7 +5,10 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, Organization, CONFIG, ORGANIZATIONS};
+use crate::state::{
+    Config, Organization, SubscriptionPlan, CONFIG, ORGANIZATIONS, SUBSCRIPTION_PLANS,
+    USER_ORGANIZATIONS,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-subscription-hub";
@@ -72,10 +75,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_binary(&query_organization(deps, organization_id)?)
         }
         QueryMsg::UserOrganizations { user_address } => {
-            unimplemented!()
+            to_binary(&query_user_organizations(deps, user_address)?)
         }
         QueryMsg::SubscriptionPlan { plan_id } => {
-            unimplemented!()
+            to_binary(&query_subscription_plan(deps, plan_id)?)
         }
         QueryMsg::SubscriptionPlans { organization_id } => {
             unimplemented!()
@@ -94,5 +97,28 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 fn query_organization(deps: Deps, organization_id: u32) -> StdResult<Organization> {
     let organization = ORGANIZATIONS.load(deps.storage, organization_id)?;
+
     Ok(organization)
+}
+
+fn query_user_organizations(deps: Deps, user_address: String) -> StdResult<Vec<Organization>> {
+    // Validate user address
+    let user_addr = deps.api.addr_validate(&user_address)?;
+
+    // Load user organizations
+    let organization_ids = USER_ORGANIZATIONS.load(deps.storage, user_addr)?;
+
+    // Load organizations for each organization id
+    let organizations = organization_ids
+        .iter()
+        .map(|id| ORGANIZATIONS.load(deps.storage, *id))
+        .collect::<StdResult<Vec<Organization>>>()?;
+
+    Ok(organizations)
+}
+
+fn query_subscription_plan(deps: Deps, plan_id: u64) -> StdResult<SubscriptionPlan> {
+    let subscription_plan = SUBSCRIPTION_PLANS.load(deps.storage, plan_id)?;
+
+    Ok(subscription_plan)
 }

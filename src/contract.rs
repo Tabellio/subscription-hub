@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
@@ -6,8 +8,8 @@ use cw2::set_contract_version;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{
-    Config, Organization, SubscriptionPlan, CONFIG, ORGANIZATIONS, SUBSCRIPTION_PLANS,
-    USER_ORGANIZATIONS,
+    Config, Organization, SubscriptionPlan, CONFIG, ORGANIZATIONS, ORGANIZATION_ID,
+    SUBSCRIPTION_ID, SUBSCRIPTION_PLANS, SUBSCRIPTION_PLAN_ID, USER_ORGANIZATIONS,
 };
 
 // version info for migration info
@@ -25,6 +27,11 @@ pub fn instantiate(
 
     let config = Config { admin: info.sender };
     CONFIG.save(deps.storage, &config)?;
+
+    // Initialize the ID counters
+    ORGANIZATION_ID.save(deps.storage, &0)?;
+    SUBSCRIPTION_PLAN_ID.save(deps.storage, &0)?;
+    SUBSCRIPTION_ID.save(deps.storage, &0)?;
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -44,9 +51,7 @@ pub fn execute(
             description,
             website,
             metadata,
-        } => {
-            unimplemented!()
-        }
+        } => execute_create_organization(deps, env, info, name, description, website, metadata),
         ExecuteMsg::CreateSubscriptionPlan {
             name,
             description,
@@ -66,6 +71,43 @@ pub fn execute(
             unimplemented!()
         }
     }
+}
+
+fn execute_create_organization(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    name: String,
+    description: String,
+    website: Option<String>,
+    metadata: Option<BTreeMap<String, String>>,
+) -> Result<Response, ContractError> {
+    // Load and save the ID counter
+    let organization_id = ORGANIZATION_ID.load(deps.storage)? + 1;
+    ORGANIZATION_ID.save(deps.storage, &organization_id)?;
+
+    // Create the organization
+    let organization = Organization {
+        owner: info.clone().sender,
+        name,
+        description,
+        website,
+        metadata,
+    };
+    ORGANIZATIONS.save(deps.storage, organization_id, &organization)?;
+
+    // Load the user's list of organizations
+    let mut user_organizations = USER_ORGANIZATIONS
+        .may_load(deps.storage, info.clone().sender)?
+        .unwrap_or_default();
+
+    // Add the organization to the user's list of organizations
+    user_organizations.push(organization_id);
+    USER_ORGANIZATIONS.save(deps.storage, info.sender, &user_organizations)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "create_organization")
+        .add_attribute("organization_id", organization_id.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

@@ -14,7 +14,7 @@ pub enum ExecuteMsg {
         name: String,
         description: String,
         website: Option<String>,
-        metadata: Option<Vec<(String, String)>>,
+        metadata: Option<BTreeMap<String, String>>,
     },
     CreateSubscriptionPlan {
         name: String,

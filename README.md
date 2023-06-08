@@ -19,5 +19,5 @@ This project is licensed under the [Apache License, Version 2.0](./LICENSE). Fee
 
 For any questions or inquiries about the CosmWasm Subscription Hub, please reach out to the project maintainers:
 
-- Maintainer Name: [findolor](findolor@tabellio.io)
+- Maintainer Name: [findolor](https://github.com/findolor)
 

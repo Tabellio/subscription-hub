@@ -96,9 +96,9 @@ pub const SUBSCRIPTION_ID: Item<u64> = Item::new("subscription_id");
 // The subscriptions map stores the subscription_id -> subscription
 pub const SUBSCRIPTIONS: Map<u64, Subscription> = Map::new("subscriptions");
 
-// The subscriber_subscriptions map stores the subscriber -> subscription_id
-pub const SUBSCRIBER_SUBSCRIPTIONS: Map<Addr, Vec<u64>> = Map::new("subscriber_subscriptions");
+// The user_subscriptions map stores the subscriber -> subscription_id
+pub const USER_SUBSCRIPTIONS: Map<Addr, Vec<u64>> = Map::new("user_subscriptions");
 
 // The subscription_plan_subscriptions map stores the subscription_plan_id and subscriber -> subscription_id
-pub const SUBSCRIPTION_PLAN_SUBSCRIPTIONS: Map<(u64, Addr), u64> =
+pub const SUBSCRIPTION_PLAN_SUBSCRIPTIONS: Map<u64, Vec<u64>> =
     Map::new("subscription_plan_subscriptions");

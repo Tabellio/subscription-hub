@@ -10,9 +10,10 @@ use cw2::set_contract_version;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{
-    Config, DurationUnit, Organization, SubscriptionPlan, CONFIG, ORGANIZATIONS, ORGANIZATION_ID,
-    ORGANIZATION_SUBSCRIPTION_PLANS, SUBSCRIPTION_ID, SUBSCRIPTION_PLANS, SUBSCRIPTION_PLAN_ID,
-    USER_ORGANIZATIONS,
+    Config, DurationUnit, Organization, Subscription, SubscriptionPlan, CONFIG, ORGANIZATIONS,
+    ORGANIZATION_ID, ORGANIZATION_SUBSCRIPTION_PLANS, SUBSCRIPTIONS, SUBSCRIPTION_ID,
+    SUBSCRIPTION_PLANS, SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_SUBSCRIPTIONS, USER_ORGANIZATIONS,
+    USER_SUBSCRIPTIONS,
 };
 
 // version info for migration info
@@ -203,13 +204,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             &query_organization_subscription_plans(deps, organization_id)?,
         ),
         QueryMsg::Subscription { subscription_id } => {
-            unimplemented!()
+            to_binary(&query_subscription(deps, subscription_id)?)
         }
         QueryMsg::UserSubscriptions { user_address } => {
-            unimplemented!()
+            to_binary(&query_user_subscriptions(deps, user_address)?)
         }
         QueryMsg::SubscriptionPlanSubscriptions { plan_id } => {
-            unimplemented!()
+            to_binary(&query_subscription_plan_subscriptions(deps, plan_id)?)
         }
     }
 }
@@ -257,4 +258,39 @@ fn query_organization_subscription_plans(
         .collect::<StdResult<Vec<SubscriptionPlan>>>()?;
 
     Ok(subscription_plans)
+}
+
+fn query_subscription(deps: Deps, subscription_id: u64) -> StdResult<Subscription> {
+    let subscription = SUBSCRIPTIONS.load(deps.storage, subscription_id)?;
+
+    Ok(subscription)
+}
+
+fn query_user_subscriptions(deps: Deps, user_address: String) -> StdResult<Vec<Subscription>> {
+    // Validate user address
+    let user_addr = deps.api.addr_validate(&user_address)?;
+
+    // Load user subscriptions
+    let subscription_ids = USER_SUBSCRIPTIONS.load(deps.storage, user_addr)?;
+
+    // Load subscriptions for each subscription id
+    let subscriptions = subscription_ids
+        .iter()
+        .map(|id| SUBSCRIPTIONS.load(deps.storage, *id))
+        .collect::<StdResult<Vec<Subscription>>>()?;
+
+    Ok(subscriptions)
+}
+
+fn query_subscription_plan_subscriptions(deps: Deps, plan_id: u64) -> StdResult<Vec<Subscription>> {
+    // Load subscription plan subscriptions
+    let subscription_ids = SUBSCRIPTION_PLAN_SUBSCRIPTIONS.load(deps.storage, plan_id)?;
+
+    // Load subscriptions for each subscription id
+    let subscriptions = subscription_ids
+        .iter()
+        .map(|id| SUBSCRIPTIONS.load(deps.storage, *id))
+        .collect::<StdResult<Vec<Subscription>>>()?;
+
+    Ok(subscriptions)
 }

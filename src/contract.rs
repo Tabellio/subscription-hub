@@ -2,14 +2,17 @@ use std::collections::BTreeMap;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
+};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{
-    Config, Organization, SubscriptionPlan, CONFIG, ORGANIZATIONS, ORGANIZATION_ID,
-    SUBSCRIPTION_ID, SUBSCRIPTION_PLANS, SUBSCRIPTION_PLAN_ID, USER_ORGANIZATIONS,
+    Config, DurationUnit, Organization, SubscriptionPlan, CONFIG, ORGANIZATIONS, ORGANIZATION_ID,
+    ORGANIZATION_SUBSCRIPTION_PLANS, SUBSCRIPTION_ID, SUBSCRIPTION_PLANS, SUBSCRIPTION_PLAN_ID,
+    USER_ORGANIZATIONS,
 };
 
 // version info for migration info
@@ -53,17 +56,31 @@ pub fn execute(
             metadata,
         } => execute_create_organization(deps, env, info, name, description, website, metadata),
         ExecuteMsg::CreateSubscriptionPlan {
+            organization_id,
             name,
             description,
-            payment_amount,
-            expiration,
+            price,
+            duration,
+            duration_unit,
             features,
             metadata,
             cancelable,
             refundable,
-        } => {
-            unimplemented!()
-        }
+        } => execute_create_subscription_plan(
+            deps,
+            env,
+            info,
+            organization_id,
+            name,
+            description,
+            price,
+            duration,
+            duration_unit,
+            features,
+            metadata,
+            cancelable,
+            refundable,
+        ),
         ExecuteMsg::SubscribePlan { plan_id } => {
             unimplemented!()
         }
@@ -110,6 +127,66 @@ fn execute_create_organization(
         .add_attribute("organization_id", organization_id.to_string()))
 }
 
+fn execute_create_subscription_plan(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    organization_id: u32,
+    name: String,
+    description: String,
+    price: Uint128,
+    duration: u8,
+    duration_unit: DurationUnit,
+    features: Option<Vec<String>>,
+    metadata: Option<BTreeMap<String, String>>,
+    cancelable: bool,
+    refundable: bool,
+) -> Result<Response, ContractError> {
+    // Load the organization
+    let organization = ORGANIZATIONS.load(deps.storage, organization_id)?;
+
+    // Check that the sender is the organization owner
+    if info.sender != organization.owner {
+        return Err(ContractError::Unauthorized {});
+    };
+
+    // Load and save the ID counter
+    let subscription_plan_id = SUBSCRIPTION_PLAN_ID.load(deps.storage)? + 1;
+    SUBSCRIPTION_PLAN_ID.save(deps.storage, &subscription_plan_id)?;
+
+    // Create the subscription plan
+    let subscription_plan = SubscriptionPlan {
+        organization_id,
+        name,
+        description,
+        price,
+        duration,
+        duration_unit,
+        features,
+        metadata,
+        cancelable,
+        refundable,
+    };
+    SUBSCRIPTION_PLANS.save(deps.storage, subscription_plan_id, &subscription_plan)?;
+
+    // Load the organization's list of subscription plans
+    let mut organization_subscription_plans = ORGANIZATION_SUBSCRIPTION_PLANS
+        .may_load(deps.storage, organization_id)?
+        .unwrap_or_default();
+
+    // Add the subscription plan to the organization's list of subscription plans
+    organization_subscription_plans.push(subscription_plan_id);
+    ORGANIZATION_SUBSCRIPTION_PLANS.save(
+        deps.storage,
+        organization_id,
+        &organization_subscription_plans,
+    )?;
+
+    Ok(Response::new()
+        .add_attribute("action", "create_subscription_plan")
+        .add_attribute("subscription_plan_id", subscription_plan_id.to_string()))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -122,9 +199,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SubscriptionPlan { plan_id } => {
             to_binary(&query_subscription_plan(deps, plan_id)?)
         }
-        QueryMsg::SubscriptionPlans { organization_id } => {
-            unimplemented!()
-        }
+        QueryMsg::OrganizationSubscriptionPlans { organization_id } => to_binary(
+            &query_organization_subscription_plans(deps, organization_id)?,
+        ),
         QueryMsg::Subscription { subscription_id } => {
             unimplemented!()
         }
@@ -163,4 +240,21 @@ fn query_subscription_plan(deps: Deps, plan_id: u64) -> StdResult<SubscriptionPl
     let subscription_plan = SUBSCRIPTION_PLANS.load(deps.storage, plan_id)?;
 
     Ok(subscription_plan)
+}
+
+fn query_organization_subscription_plans(
+    deps: Deps,
+    organization_id: u32,
+) -> StdResult<Vec<SubscriptionPlan>> {
+    // Load organization subscription plans
+    let subscription_plan_ids =
+        ORGANIZATION_SUBSCRIPTION_PLANS.load(deps.storage, organization_id)?;
+
+    // Load subscription plans for each subscription plan id
+    let subscription_plans = subscription_plan_ids
+        .iter()
+        .map(|id| SUBSCRIPTION_PLANS.load(deps.storage, *id))
+        .collect::<StdResult<Vec<SubscriptionPlan>>>()?;
+
+    Ok(subscription_plans)
 }

@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Timestamp, Uint128};
+use cosmwasm_std::Uint128;
 
-use crate::state::{Organization, Subscription, SubscriptionPlan};
+use crate::state::{DurationUnit, Organization, Subscription, SubscriptionPlan};
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -19,10 +19,12 @@ pub enum ExecuteMsg {
     },
     // Create a new subscription plan for an organization
     CreateSubscriptionPlan {
+        organization_id: u32,
         name: String,
         description: String,
-        payment_amount: Uint128,
-        expiration: Timestamp,
+        price: Uint128,
+        duration: u8,
+        duration_unit: DurationUnit,
         features: Option<Vec<String>>,
         metadata: Option<BTreeMap<String, String>>,
         cancelable: bool,
@@ -52,7 +54,7 @@ pub enum QueryMsg {
     SubscriptionPlan { plan_id: u64 },
     // Get all subscription plans owned by the given organization
     #[returns(Vec<SubscriptionPlan>)]
-    SubscriptionPlans { organization_id: u32 },
+    OrganizationSubscriptionPlans { organization_id: u32 },
     // Get the subscription with the given ID
     #[returns(Subscription)]
     Subscription { subscription_id: u64 },

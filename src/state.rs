@@ -53,7 +53,7 @@ pub struct SubscriptionPlan {
     // Description of the subscription plan
     pub description: String,
     // Price of the subscription plan
-    pub payment_amount: Uint128,
+    pub price: Uint128,
     // Duration of the subscription plan
     pub duration: u8,
     // Unit of the duration of the subscription plan

@@ -1,4 +1,6 @@
 pub mod helpers;
+use helpers::*;
+
 use std::collections::BTreeMap;
 
 use cosmwasm_std::Addr;
@@ -7,7 +9,6 @@ use cw_subscription_hub::{
     msg::{ExecuteMsg, QueryMsg},
     state::Organization,
 };
-use helpers::*;
 
 #[test]
 fn test_happy_path() {

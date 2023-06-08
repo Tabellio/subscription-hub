@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Coin, Empty, Uint128};
 use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
-use cw_subscription_hub::msg::InstantiateMsg;
+use cw_subscription_hub::msg::{ExecuteMsg, InstantiateMsg};
 
 pub fn cw_subscription_hub() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
@@ -116,4 +116,19 @@ pub fn proper_instantiate(app: &mut App, admin: &str) -> Addr {
         None,
     )
     .unwrap()
+}
+
+pub fn create_organization(app: &mut App, subscription_hub: &Addr, owner: &str) {
+    app.execute_contract(
+        Addr::unchecked(owner),
+        subscription_hub.clone(),
+        &ExecuteMsg::CreateOrganization {
+            name: "Test Organization".to_string(),
+            description: "Test organization is the best".to_string(),
+            website: None,
+            metadata: None,
+        },
+        &vec![],
+    )
+    .unwrap();
 }

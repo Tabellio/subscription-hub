@@ -144,3 +144,39 @@ fn test_happy_path() {
         .unwrap();
     assert_eq!(organization_subscription_plans.len(), 3);
 }
+
+#[test]
+fn test_invalid_organization_owner() {
+    let mut app = mock_app();
+    let subscription_hub = proper_instantiate(&mut app, ADMIN);
+
+    create_organization(&mut app, &subscription_hub, ORGANIZATION);
+
+    // Create subscription plan with invalid organization owner
+    let err = app
+        .execute_contract(
+            Addr::unchecked(ORGANIZATION2),
+            subscription_hub.clone(),
+            &ExecuteMsg::CreateSubscriptionPlan {
+                organization_id: 1,
+                name: "Test Plan".to_string(),
+                description: "Test plan is the best".to_string(),
+                price: Uint128::new(10_000),
+                duration: 1,
+                duration_unit: DurationUnit::Month,
+                features: Some(vec![
+                    "first_feature".to_string(),
+                    "second_feature".to_string(),
+                ]),
+                metadata: None,
+                cancelable: false,
+                refundable: false,
+            },
+            &vec![],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        "Unauthorized".to_string()
+    );
+}

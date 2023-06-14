@@ -64,4 +64,7 @@ pub enum QueryMsg {
     // Get all subscriptions for the given subscription plan
     #[returns(Vec<Subscription>)]
     SubscriptionPlanSubscriptions { plan_id: u64 },
+    // Checks if the given user is subscribed to the given subscription plan
+    #[returns(bool)]
+    IsSubscribed { user_address: String, plan_id: u64 },
 }

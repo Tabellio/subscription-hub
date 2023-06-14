@@ -242,7 +242,7 @@ fn execute_subscribe_plan(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Organization { organization_id } => {
             to_binary(&query_organization(deps, organization_id)?)
@@ -265,6 +265,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SubscriptionPlanSubscriptions { plan_id } => {
             to_binary(&query_subscription_plan_subscriptions(deps, plan_id)?)
         }
+        QueryMsg::IsSubscribed {
+            user_address,
+            plan_id,
+        } => to_binary(&query_is_subscribed(deps, env, user_address, plan_id)?),
     }
 }
 
@@ -346,4 +350,28 @@ fn query_subscription_plan_subscriptions(deps: Deps, plan_id: u64) -> StdResult<
         .collect::<StdResult<Vec<Subscription>>>()?;
 
     Ok(subscriptions)
+}
+
+fn query_is_subscribed(
+    deps: Deps,
+    env: Env,
+    user_address: String,
+    plan_id: u64,
+) -> StdResult<bool> {
+    // Validate user address
+    let user_addr = deps.api.addr_validate(&user_address)?;
+
+    // Load subscription
+    let subscription = SUBSCRIPTIONS.load(deps.storage, plan_id)?;
+
+    // Check if user is subscribed to the plan
+    let is_subscribed = subscription.subscriber == user_addr;
+
+    // Check if the subscription is canceled
+    let is_canceled = subscription.canceled;
+
+    // Check if the subscription is expired
+    let is_expired = subscription.expiration < env.block.time;
+
+    Ok(is_subscribed && !is_canceled && !is_expired)
 }

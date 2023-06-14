@@ -34,5 +34,17 @@ fn test_happy_path() {
         .unwrap();
     assert_eq!(res.subscriber, USER);
     assert_eq!(res.plan_id, 1);
-    assert_eq!(res.expiration, app.block_info().time.plus_seconds(252000));
+    assert_eq!(res.expiration, app.block_info().time.plus_seconds(2592000));
+
+    let res: bool = app
+        .wrap()
+        .query_wasm_smart(
+            subscription_hub.clone(),
+            &QueryMsg::IsSubscribed {
+                user_address: USER.to_string(),
+                plan_id: 1,
+            },
+        )
+        .unwrap();
+    assert_eq!(res, true);
 }

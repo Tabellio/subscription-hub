@@ -4,10 +4,14 @@ Subscription Hub is a decentralized application (dApp) that allows projects and 
 
 ## Features
 
+> **Note**: The Subscription Hub is currently under development. Not all features are available in the contract for the first release. Some of the features listed above are planned for future releases.
+
 - **Flexible Subscription Plans**: Create customizable subscription plans with various payment amounts, durations, and features. Projects can define subscription plans tailored to their specific needs.
 
 - **Integration with dApps and Web Applications**: Seamlessly integrate the subscription plans into dApps and traditional web applications, allowing users to access exclusive content, features, or services.
-<!-- - **Automated Payment and Expiration**: Streamline the payment process and plan expiration by leveraging smart contract automation. Users can subscribe, make payments, and receive notifications about plan renewals or expirations. -->
+
+- **Automated Payment and Expiration**: Streamline the payment process and plan expiration by leveraging smart contract automation. Users can subscribe, make payments, and receive notifications about plan renewals or expirations.
+
 - **Cancel and Refund Flows**: Provide users with the ability to cancel their subscriptions and initiate refund processes, adhering to predefined cancellation policies and refund rules.
 
 - **Multi-Organization Support**: Allow projects to create and manage multiple organizations, each with its own set of subscription plans. Users can subscribe to plans offered by different organizations.

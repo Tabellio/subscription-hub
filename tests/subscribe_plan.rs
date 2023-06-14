@@ -15,7 +15,7 @@ fn test_happy_path() {
 
     create_organization(&mut app, &subscription_hub, ORGANIZATION);
 
-    create_subscription_plan(&mut app, &subscription_hub, ORGANIZATION, 1);
+    create_subscription_plan(&mut app, &subscription_hub, ORGANIZATION, 1, false);
 
     app.execute_contract(
         Addr::unchecked(USER),

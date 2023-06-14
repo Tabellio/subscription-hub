@@ -141,6 +141,7 @@ pub fn create_subscription_plan(
     subscription_hub: &Addr,
     owner: &str,
     organization_id: u32,
+    cancelable: bool,
 ) {
     app.execute_contract(
         Addr::unchecked(owner),
@@ -157,9 +158,19 @@ pub fn create_subscription_plan(
                 "second_feature".to_string(),
             ]),
             metadata: None,
-            cancelable: false,
+            cancelable,
             refundable: false,
         },
+        &vec![],
+    )
+    .unwrap();
+}
+
+pub fn subscribe_plan(app: &mut App, subscription_hub: &Addr, subscriber: &str, plan_id: u64) {
+    app.execute_contract(
+        Addr::unchecked(subscriber),
+        subscription_hub.clone(),
+        &ExecuteMsg::SubscribePlan { plan_id },
         &vec![],
     )
     .unwrap();

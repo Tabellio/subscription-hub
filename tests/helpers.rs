@@ -1,6 +1,9 @@
 use cosmwasm_std::{Addr, Coin, Empty, Uint128};
 use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
-use subscription_hub::msg::{ExecuteMsg, InstantiateMsg};
+use subscription_hub::{
+    msg::{ExecuteMsg, InstantiateMsg},
+    state::DurationUnit,
+};
 
 pub fn subscription_hub() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
@@ -127,6 +130,35 @@ pub fn create_organization(app: &mut App, subscription_hub: &Addr, owner: &str) 
             description: "Test organization is the best".to_string(),
             website: None,
             metadata: None,
+        },
+        &vec![],
+    )
+    .unwrap();
+}
+
+pub fn create_subscription_plan(
+    app: &mut App,
+    subscription_hub: &Addr,
+    owner: &str,
+    organization_id: u32,
+) {
+    app.execute_contract(
+        Addr::unchecked(owner),
+        subscription_hub.clone(),
+        &ExecuteMsg::CreateSubscriptionPlan {
+            organization_id,
+            name: "Test Plan".to_string(),
+            description: "Test plan is the best".to_string(),
+            price: Uint128::new(10_000),
+            duration: 1,
+            duration_unit: DurationUnit::Month,
+            features: Some(vec![
+                "first_feature".to_string(),
+                "second_feature".to_string(),
+            ]),
+            metadata: None,
+            cancelable: false,
+            refundable: false,
         },
         &vec![],
     )

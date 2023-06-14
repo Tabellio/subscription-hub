@@ -82,9 +82,7 @@ pub fn execute(
             cancelable,
             refundable,
         ),
-        ExecuteMsg::SubscribePlan { plan_id } => {
-            unimplemented!()
-        }
+        ExecuteMsg::SubscribePlan { plan_id } => execute_subscribe_plan(deps, env, info, plan_id),
         ExecuteMsg::CancelPlan { plan_id } => {
             unimplemented!()
         }
@@ -186,6 +184,61 @@ fn execute_create_subscription_plan(
     Ok(Response::new()
         .add_attribute("action", "create_subscription_plan")
         .add_attribute("subscription_plan_id", subscription_plan_id.to_string()))
+}
+
+fn execute_subscribe_plan(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    plan_id: u64,
+) -> Result<Response, ContractError> {
+    // Load the subscription plan
+    let subscription_plan = SUBSCRIPTION_PLANS.load(deps.storage, plan_id)?;
+
+    // Calculate the expiration date based on the duration and duration unit
+    let time_unit = match subscription_plan.duration_unit {
+        DurationUnit::Day => 86400,
+        DurationUnit::Week => 604800,
+        DurationUnit::Month => 2592000,
+        DurationUnit::Year => 31536000,
+    };
+    let expiration = env
+        .block
+        .time
+        .plus_seconds(subscription_plan.duration as u64 * time_unit);
+
+    // Load and save the subscription id counter
+    let subscription_id = SUBSCRIPTION_ID.load(deps.storage)? + 1;
+    SUBSCRIPTION_ID.save(deps.storage, &subscription_id)?;
+
+    // Create the subscription
+    let subscription = Subscription {
+        subscriber: info.clone().sender,
+        plan_id,
+        expiration,
+        canceled: false,
+    };
+
+    // Save the subscription
+    SUBSCRIPTIONS.save(deps.storage, subscription_id, &subscription)?;
+
+    // Load the user's list of subscriptions
+    let mut user_subscriptions = USER_SUBSCRIPTIONS
+        .may_load(deps.storage, info.clone().sender)?
+        .unwrap_or_default();
+
+    // Add the subscription to the user's list of subscriptions
+    user_subscriptions.push(subscription_id);
+    USER_SUBSCRIPTIONS.save(deps.storage, info.sender, &user_subscriptions)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "subscribe_plan")
+        .add_attribute(
+            "organization_id",
+            subscription_plan.organization_id.to_string(),
+        )
+        .add_attribute("subscription_plan_id", plan_id.to_string())
+        .add_attribute("subscription_id", subscription_id.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

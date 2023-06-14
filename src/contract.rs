@@ -83,9 +83,7 @@ pub fn execute(
             refundable,
         ),
         ExecuteMsg::SubscribePlan { plan_id } => execute_subscribe_plan(deps, env, info, plan_id),
-        ExecuteMsg::CancelPlan { plan_id } => {
-            unimplemented!()
-        }
+        ExecuteMsg::CancelPlan { plan_id } => execute_cancel_plan(deps, env, info, plan_id),
     }
 }
 
@@ -238,6 +236,47 @@ fn execute_subscribe_plan(
             subscription_plan.organization_id.to_string(),
         )
         .add_attribute("subscription_plan_id", plan_id.to_string())
+        .add_attribute("subscription_id", subscription_id.to_string()))
+}
+
+fn execute_cancel_plan(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    subscription_id: u64,
+) -> Result<Response, ContractError> {
+    // Load the subscription
+    let mut subscription = SUBSCRIPTIONS.load(deps.storage, subscription_id)?;
+
+    // Load the subscription plan
+    let subscription_plan = SUBSCRIPTION_PLANS.load(deps.storage, subscription.plan_id)?;
+
+    // Check that the sender is the subscription owner
+    if info.sender != subscription.subscriber {
+        return Err(ContractError::Unauthorized {});
+    };
+
+    // Check that the subscription is cancelable
+    if !subscription_plan.cancelable {
+        return Err(ContractError::NotCancelable {});
+    };
+
+    // Check that the subscription is not already canceled
+    if subscription.canceled {
+        return Err(ContractError::AlreadyCanceled {});
+    };
+
+    // Check that the subscription is not expired
+    if env.block.time > subscription.expiration {
+        return Err(ContractError::AlreadyExpired {});
+    };
+
+    // Cancel the subscription and save it
+    subscription.canceled = true;
+    SUBSCRIPTIONS.save(deps.storage, subscription_id, &subscription)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "cancel_plan")
         .add_attribute("subscription_id", subscription_id.to_string()))
 }
 

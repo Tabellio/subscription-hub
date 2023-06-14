@@ -8,4 +8,13 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("Subscription cannot be canceled")]
+    NotCancelable {},
+
+    #[error("Subscription is already canceled")]
+    AlreadyCanceled {},
+
+    #[error("Subscription is already expired")]
+    AlreadyExpired {},
 }

@@ -3,10 +3,7 @@ use helpers::*;
 
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
-use subscription_hub::{
-    msg::{ExecuteMsg, QueryMsg},
-    state::Subscription,
-};
+use subscription_hub::msg::{ExecuteMsg, QueryMsg, SubscriptionResponse};
 
 #[test]
 fn test_happy_path() {
@@ -25,16 +22,19 @@ fn test_happy_path() {
     )
     .unwrap();
 
-    let res: Subscription = app
+    let res: SubscriptionResponse = app
         .wrap()
         .query_wasm_smart(
             subscription_hub.clone(),
             &QueryMsg::Subscription { subscription_id: 1 },
         )
         .unwrap();
-    assert_eq!(res.subscriber, USER);
-    assert_eq!(res.plan_id, 1);
-    assert_eq!(res.expiration, app.block_info().time.plus_seconds(2592000));
+    assert_eq!(res.data.subscriber, USER);
+    assert_eq!(res.data.plan_id, 1);
+    assert_eq!(
+        res.data.expiration,
+        app.block_info().time.plus_seconds(2592000)
+    );
 
     let res: bool = app
         .wrap()

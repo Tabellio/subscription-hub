@@ -5,10 +5,7 @@ use std::collections::BTreeMap;
 
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
-use subscription_hub::{
-    msg::{ExecuteMsg, QueryMsg},
-    state::Organization,
-};
+use subscription_hub::msg::{ExecuteMsg, OrganizationResponse, QueryMsg};
 
 #[test]
 fn test_happy_path() {
@@ -44,19 +41,19 @@ fn test_happy_path() {
     )
     .unwrap();
 
-    let organization: Organization = app
+    let res: OrganizationResponse = app
         .wrap()
         .query_wasm_smart(
             subscription_hub.clone(),
             &QueryMsg::Organization { organization_id: 1 },
         )
         .unwrap();
-    assert_eq!(organization.name, "Test Organization");
-    assert_eq!(organization.description, "Test organization is the best");
-    assert_eq!(organization.website, None);
-    assert_eq!(organization.metadata, None);
+    assert_eq!(res.data.name, "Test Organization");
+    assert_eq!(res.data.description, "Test organization is the best");
+    assert_eq!(res.data.website, None);
+    assert_eq!(res.data.metadata, None);
 
-    let user_organizations: Vec<Organization> = app
+    let res: Vec<OrganizationResponse> = app
         .wrap()
         .query_wasm_smart(
             subscription_hub,
@@ -65,19 +62,16 @@ fn test_happy_path() {
             },
         )
         .unwrap();
-    assert_eq!(user_organizations.len(), 2);
-    assert_eq!(user_organizations[0].name, "Test Organization");
+    assert_eq!(res.len(), 2);
+    assert_eq!(res[0].data.name, "Test Organization");
+    assert_eq!(res[0].data.description, "Test organization is the best");
+    assert_eq!(res[0].data.website, None);
+    assert_eq!(res[0].data.metadata, None);
+    assert_eq!(res[1].data.name, "Second Test Organization");
     assert_eq!(
-        user_organizations[0].description,
-        "Test organization is the best"
-    );
-    assert_eq!(user_organizations[0].website, None);
-    assert_eq!(user_organizations[0].metadata, None);
-    assert_eq!(user_organizations[1].name, "Second Test Organization");
-    assert_eq!(
-        user_organizations[1].description,
+        res[1].data.description,
         "Second test organization is the best"
     );
-    assert_eq!(user_organizations[1].website, None);
-    assert_eq!(user_organizations[1].metadata, Some(organization2_metadata));
+    assert_eq!(res[1].data.website, None);
+    assert_eq!(res[1].data.metadata, Some(organization2_metadata));
 }

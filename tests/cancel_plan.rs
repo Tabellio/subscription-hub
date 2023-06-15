@@ -4,8 +4,7 @@ use helpers::*;
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
 use subscription_hub::{
-    msg::{ExecuteMsg, QueryMsg},
-    state::Subscription,
+    msg::{ExecuteMsg, QueryMsg, SubscriptionResponse},
     ContractError,
 };
 
@@ -28,14 +27,14 @@ fn test_happy_path() {
     )
     .unwrap();
 
-    let res: Subscription = app
+    let res: SubscriptionResponse = app
         .wrap()
         .query_wasm_smart(
             subscription_hub.clone(),
             &QueryMsg::Subscription { subscription_id: 1 },
         )
         .unwrap();
-    assert_eq!(res.canceled, true);
+    assert_eq!(res.data.canceled, true);
 
     let res: bool = app
         .wrap()

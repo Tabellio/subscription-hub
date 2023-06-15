@@ -44,27 +44,45 @@ pub enum ExecuteMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     // Get the organization with the given ID
-    #[returns(Organization)]
+    #[returns(OrganizationResponse)]
     Organization { organization_id: u32 },
     // Get all organizations owned by the given user
-    #[returns(Vec<Organization>)]
+    #[returns(Vec<OrganizationResponse>)]
     UserOrganizations { user_address: String },
     // Get the subscription plan with the given ID
-    #[returns(SubscriptionPlan)]
+    #[returns(SubscriptionPlanResponse)]
     SubscriptionPlan { plan_id: u64 },
     // Get all subscription plans owned by the given organization
-    #[returns(Vec<SubscriptionPlan>)]
+    #[returns(Vec<SubscriptionPlanResponse>)]
     OrganizationSubscriptionPlans { organization_id: u32 },
     // Get the subscription with the given ID
-    #[returns(Subscription)]
+    #[returns(SubscriptionResponse)]
     Subscription { subscription_id: u64 },
     // Get all subscriptions owned by the given user
-    #[returns(Vec<Subscription>)]
+    #[returns(Vec<SubscriptionResponse>)]
     UserSubscriptions { user_address: String },
     // Get all subscriptions for the given subscription plan
-    #[returns(Vec<Subscription>)]
+    #[returns(Vec<SubscriptionResponse>)]
     SubscriptionPlanSubscriptions { plan_id: u64 },
     // Checks if the given user is subscribed to the given subscription plan
     #[returns(bool)]
     IsSubscribed { user_address: String, plan_id: u64 },
+}
+
+#[cw_serde]
+pub struct OrganizationResponse {
+    pub id: u32,
+    pub data: Organization,
+}
+
+#[cw_serde]
+pub struct SubscriptionPlanResponse {
+    pub id: u64,
+    pub data: SubscriptionPlan,
+}
+
+#[cw_serde]
+pub struct SubscriptionResponse {
+    pub id: u64,
+    pub data: Subscription,
 }

@@ -8,7 +8,10 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{
+    ExecuteMsg, InstantiateMsg, OrganizationResponse, QueryMsg, SubscriptionPlanResponse,
+    SubscriptionResponse,
+};
 use crate::state::{
     Config, DurationUnit, Organization, Subscription, SubscriptionPlan, CONFIG, ORGANIZATIONS,
     ORGANIZATION_ID, ORGANIZATION_SUBSCRIPTION_PLANS, SUBSCRIPTIONS, SUBSCRIPTION_ID,
@@ -311,13 +314,19 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-fn query_organization(deps: Deps, organization_id: u32) -> StdResult<Organization> {
+fn query_organization(deps: Deps, organization_id: u32) -> StdResult<OrganizationResponse> {
     let organization = ORGANIZATIONS.load(deps.storage, organization_id)?;
 
-    Ok(organization)
+    Ok(OrganizationResponse {
+        id: organization_id,
+        data: organization,
+    })
 }
 
-fn query_user_organizations(deps: Deps, user_address: String) -> StdResult<Vec<Organization>> {
+fn query_user_organizations(
+    deps: Deps,
+    user_address: String,
+) -> StdResult<Vec<OrganizationResponse>> {
     // Validate user address
     let user_addr = deps.api.addr_validate(&user_address)?;
 
@@ -327,22 +336,31 @@ fn query_user_organizations(deps: Deps, user_address: String) -> StdResult<Vec<O
     // Load organizations for each organization id
     let organizations = organization_ids
         .iter()
-        .map(|id| ORGANIZATIONS.load(deps.storage, *id))
-        .collect::<StdResult<Vec<Organization>>>()?;
+        .map(|id| {
+            let organization = ORGANIZATIONS.load(deps.storage, *id)?;
+            Ok(OrganizationResponse {
+                id: *id,
+                data: organization,
+            })
+        })
+        .collect::<StdResult<Vec<OrganizationResponse>>>()?;
 
     Ok(organizations)
 }
 
-fn query_subscription_plan(deps: Deps, plan_id: u64) -> StdResult<SubscriptionPlan> {
+fn query_subscription_plan(deps: Deps, plan_id: u64) -> StdResult<SubscriptionPlanResponse> {
     let subscription_plan = SUBSCRIPTION_PLANS.load(deps.storage, plan_id)?;
 
-    Ok(subscription_plan)
+    Ok(SubscriptionPlanResponse {
+        id: plan_id,
+        data: subscription_plan,
+    })
 }
 
 fn query_organization_subscription_plans(
     deps: Deps,
     organization_id: u32,
-) -> StdResult<Vec<SubscriptionPlan>> {
+) -> StdResult<Vec<SubscriptionPlanResponse>> {
     // Load organization subscription plans
     let subscription_plan_ids =
         ORGANIZATION_SUBSCRIPTION_PLANS.load(deps.storage, organization_id)?;
@@ -350,19 +368,31 @@ fn query_organization_subscription_plans(
     // Load subscription plans for each subscription plan id
     let subscription_plans = subscription_plan_ids
         .iter()
-        .map(|id| SUBSCRIPTION_PLANS.load(deps.storage, *id))
-        .collect::<StdResult<Vec<SubscriptionPlan>>>()?;
+        .map(|id| {
+            let subscription_plan = SUBSCRIPTION_PLANS.load(deps.storage, *id)?;
+            Ok(SubscriptionPlanResponse {
+                id: *id,
+                data: subscription_plan,
+            })
+        })
+        .collect::<StdResult<Vec<SubscriptionPlanResponse>>>()?;
 
     Ok(subscription_plans)
 }
 
-fn query_subscription(deps: Deps, subscription_id: u64) -> StdResult<Subscription> {
+fn query_subscription(deps: Deps, subscription_id: u64) -> StdResult<SubscriptionResponse> {
     let subscription = SUBSCRIPTIONS.load(deps.storage, subscription_id)?;
 
-    Ok(subscription)
+    Ok(SubscriptionResponse {
+        id: subscription_id,
+        data: subscription,
+    })
 }
 
-fn query_user_subscriptions(deps: Deps, user_address: String) -> StdResult<Vec<Subscription>> {
+fn query_user_subscriptions(
+    deps: Deps,
+    user_address: String,
+) -> StdResult<Vec<SubscriptionResponse>> {
     // Validate user address
     let user_addr = deps.api.addr_validate(&user_address)?;
 
@@ -372,21 +402,36 @@ fn query_user_subscriptions(deps: Deps, user_address: String) -> StdResult<Vec<S
     // Load subscriptions for each subscription id
     let subscriptions = subscription_ids
         .iter()
-        .map(|id| SUBSCRIPTIONS.load(deps.storage, *id))
-        .collect::<StdResult<Vec<Subscription>>>()?;
+        .map(|id| {
+            let subscription = SUBSCRIPTIONS.load(deps.storage, *id)?;
+            Ok(SubscriptionResponse {
+                id: *id,
+                data: subscription,
+            })
+        })
+        .collect::<StdResult<Vec<SubscriptionResponse>>>()?;
 
     Ok(subscriptions)
 }
 
-fn query_subscription_plan_subscriptions(deps: Deps, plan_id: u64) -> StdResult<Vec<Subscription>> {
+fn query_subscription_plan_subscriptions(
+    deps: Deps,
+    plan_id: u64,
+) -> StdResult<Vec<SubscriptionResponse>> {
     // Load subscription plan subscriptions
     let subscription_ids = SUBSCRIPTION_PLAN_SUBSCRIPTIONS.load(deps.storage, plan_id)?;
 
     // Load subscriptions for each subscription id
     let subscriptions = subscription_ids
         .iter()
-        .map(|id| SUBSCRIPTIONS.load(deps.storage, *id))
-        .collect::<StdResult<Vec<Subscription>>>()?;
+        .map(|id| {
+            let subscription = SUBSCRIPTIONS.load(deps.storage, *id)?;
+            Ok(SubscriptionResponse {
+                id: *id,
+                data: subscription,
+            })
+        })
+        .collect::<StdResult<Vec<SubscriptionResponse>>>()?;
 
     Ok(subscriptions)
 }

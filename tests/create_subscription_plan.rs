@@ -4,8 +4,8 @@ use helpers::*;
 use cosmwasm_std::{Addr, Uint128};
 use cw_multi_test::Executor;
 use subscription_hub::{
-    msg::{ExecuteMsg, QueryMsg},
-    state::{DurationUnit, SubscriptionPlan},
+    msg::{ExecuteMsg, QueryMsg, SubscriptionPlanResponse},
+    state::DurationUnit,
 };
 
 #[test]
@@ -92,57 +92,54 @@ fn test_happy_path() {
     )
     .unwrap();
 
-    let subscription_plan: SubscriptionPlan = app
+    let res: SubscriptionPlanResponse = app
         .wrap()
         .query_wasm_smart(
             subscription_hub.clone(),
             &QueryMsg::SubscriptionPlan { plan_id: 1 },
         )
         .unwrap();
-    assert_eq!(subscription_plan.name, "Test Plan");
-    assert_eq!(subscription_plan.description, "Test plan is the best");
-    assert_eq!(subscription_plan.price, Uint128::new(10_000));
-    assert_eq!(subscription_plan.duration, 1);
-    assert_eq!(subscription_plan.duration_unit, DurationUnit::Month);
+    assert_eq!(res.data.name, "Test Plan");
+    assert_eq!(res.data.description, "Test plan is the best");
+    assert_eq!(res.data.price, Uint128::new(10_000));
+    assert_eq!(res.data.duration, 1);
+    assert_eq!(res.data.duration_unit, DurationUnit::Month);
 
-    let subscription_plan: SubscriptionPlan = app
+    let res: SubscriptionPlanResponse = app
         .wrap()
         .query_wasm_smart(
             subscription_hub.clone(),
             &QueryMsg::SubscriptionPlan { plan_id: 2 },
         )
         .unwrap();
-    assert_eq!(subscription_plan.name, "Second Test Plan");
-    assert_eq!(
-        subscription_plan.description,
-        "Second test plan is the best"
-    );
-    assert_eq!(subscription_plan.price, Uint128::new(50_000));
-    assert_eq!(subscription_plan.duration, 6);
-    assert_eq!(subscription_plan.duration_unit, DurationUnit::Month);
+    assert_eq!(res.data.name, "Second Test Plan");
+    assert_eq!(res.data.description, "Second test plan is the best");
+    assert_eq!(res.data.price, Uint128::new(50_000));
+    assert_eq!(res.data.duration, 6);
+    assert_eq!(res.data.duration_unit, DurationUnit::Month);
 
-    let subscription_plan: SubscriptionPlan = app
+    let res: SubscriptionPlanResponse = app
         .wrap()
         .query_wasm_smart(
             subscription_hub.clone(),
             &QueryMsg::SubscriptionPlan { plan_id: 3 },
         )
         .unwrap();
-    assert_eq!(subscription_plan.name, "Third Test Plan");
-    assert_eq!(subscription_plan.description, "Third test plan is the best");
-    assert_eq!(subscription_plan.price, Uint128::new(250_000));
-    assert_eq!(subscription_plan.duration, 1);
-    assert_eq!(subscription_plan.duration_unit, DurationUnit::Year);
-    assert_eq!(subscription_plan.features.unwrap().len(), 8);
+    assert_eq!(res.data.name, "Third Test Plan");
+    assert_eq!(res.data.description, "Third test plan is the best");
+    assert_eq!(res.data.price, Uint128::new(250_000));
+    assert_eq!(res.data.duration, 1);
+    assert_eq!(res.data.duration_unit, DurationUnit::Year);
+    assert_eq!(res.data.features.unwrap().len(), 8);
 
-    let organization_subscription_plans: Vec<SubscriptionPlan> = app
+    let res: Vec<SubscriptionPlanResponse> = app
         .wrap()
         .query_wasm_smart(
             subscription_hub.clone(),
             &QueryMsg::OrganizationSubscriptionPlans { organization_id: 1 },
         )
         .unwrap();
-    assert_eq!(organization_subscription_plans.len(), 3);
+    assert_eq!(res.len(), 3);
 }
 
 #[test]

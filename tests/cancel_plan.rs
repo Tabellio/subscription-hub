@@ -47,6 +47,19 @@ fn test_happy_path() {
         )
         .unwrap();
     assert_eq!(res, false);
+
+    let res: Vec<SubscriptionResponse> = app
+        .wrap()
+        .query_wasm_smart(
+            subscription_hub.clone(),
+            &QueryMsg::SubscriptionPlanSubscriptions {
+                plan_id: 1,
+                start_after: None,
+                limit: None,
+            },
+        )
+        .unwrap();
+    assert_eq!(res.len(), 0);
 }
 
 #[test]

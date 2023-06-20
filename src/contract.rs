@@ -3,9 +3,11 @@ use std::collections::BTreeMap;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
+use cw_storage_plus::Bound;
+use cw_utils::maybe_addr;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -223,14 +225,36 @@ fn execute_subscribe_plan(
     // Save the subscription
     SUBSCRIPTIONS.save(deps.storage, subscription_id, &subscription)?;
 
-    // Load the user's list of subscriptions
-    let mut user_subscriptions = USER_SUBSCRIPTIONS
-        .may_load(deps.storage, info.clone().sender)?
-        .unwrap_or_default();
+    // Update the user's list of subscriptions
+    match USER_SUBSCRIPTIONS.may_load(deps.storage, (info.clone().sender, plan_id))? {
+        // Update an existing subscription
+        Some(existing_subscription_id) => {
+            let existing_subscription =
+                SUBSCRIPTIONS.load(deps.storage, existing_subscription_id)?;
 
-    // Add the subscription to the user's list of subscriptions
-    user_subscriptions.push(subscription_id);
-    USER_SUBSCRIPTIONS.save(deps.storage, info.sender, &user_subscriptions)?;
+            // Check if the subscription is still active
+            if !existing_subscription.canceled || existing_subscription.expiration > env.block.time
+            {
+                return Err(ContractError::AlreadySubscribed {});
+            }
+
+            // Update the existing subscription
+            USER_SUBSCRIPTIONS.save(
+                deps.storage,
+                (info.clone().sender, plan_id),
+                &subscription_id,
+            )?
+        }
+        // Create a new subscription
+        None => USER_SUBSCRIPTIONS.save(
+            deps.storage,
+            (info.clone().sender, plan_id),
+            &subscription_id,
+        )?,
+    }
+
+    // Update the subscription plan's list of subscriptions
+    SUBSCRIPTION_PLAN_SUBSCRIPTIONS.save(deps.storage, (plan_id, info.sender), &subscription_id)?;
 
     Ok(Response::new()
         .add_attribute("action", "subscribe_plan")
@@ -278,6 +302,9 @@ fn execute_cancel_plan(
     subscription.canceled = true;
     SUBSCRIPTIONS.save(deps.storage, subscription_id, &subscription)?;
 
+    // Remove the subscription from the user's list of subscriptions
+    SUBSCRIPTION_PLAN_SUBSCRIPTIONS.remove(deps.storage, (subscription.plan_id, info.sender));
+
     Ok(Response::new()
         .add_attribute("action", "cancel_plan")
         .add_attribute("subscription_id", subscription_id.to_string()))
@@ -301,12 +328,26 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Subscription { subscription_id } => {
             to_binary(&query_subscription(deps, subscription_id)?)
         }
-        QueryMsg::UserSubscriptions { user_address } => {
-            to_binary(&query_user_subscriptions(deps, user_address)?)
-        }
-        QueryMsg::SubscriptionPlanSubscriptions { plan_id } => {
-            to_binary(&query_subscription_plan_subscriptions(deps, plan_id)?)
-        }
+        QueryMsg::UserSubscriptions {
+            user_address,
+            start_after,
+            limit,
+        } => to_binary(&query_user_subscriptions(
+            deps,
+            user_address,
+            start_after,
+            limit,
+        )?),
+        QueryMsg::SubscriptionPlanSubscriptions {
+            plan_id,
+            start_after,
+            limit,
+        } => to_binary(&query_subscription_plan_subscriptions(
+            deps,
+            plan_id,
+            start_after,
+            limit,
+        )?),
         QueryMsg::IsSubscribed {
             user_address,
             plan_id,
@@ -392,20 +433,24 @@ fn query_subscription(deps: Deps, subscription_id: u64) -> StdResult<Subscriptio
 fn query_user_subscriptions(
     deps: Deps,
     user_address: String,
+    start_after: Option<u64>,
+    limit: Option<u8>,
 ) -> StdResult<Vec<SubscriptionResponse>> {
     // Validate user address
     let user_addr = deps.api.addr_validate(&user_address)?;
+    let limit = limit.unwrap_or(20) as usize;
+    let start = start_after.map(Bound::exclusive);
 
     // Load user subscriptions
-    let subscription_ids = USER_SUBSCRIPTIONS.load(deps.storage, user_addr)?;
-
-    // Load subscriptions for each subscription id
-    let subscriptions = subscription_ids
-        .iter()
-        .map(|id| {
-            let subscription = SUBSCRIPTIONS.load(deps.storage, *id)?;
+    let subscriptions = USER_SUBSCRIPTIONS
+        .prefix(user_addr)
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (_, subscription_id) = item?;
+            let subscription = SUBSCRIPTIONS.load(deps.storage, subscription_id)?;
             Ok(SubscriptionResponse {
-                id: *id,
+                id: subscription_id,
                 data: subscription,
             })
         })
@@ -417,17 +462,24 @@ fn query_user_subscriptions(
 fn query_subscription_plan_subscriptions(
     deps: Deps,
     plan_id: u64,
+    start_after: Option<String>,
+    limit: Option<u8>,
 ) -> StdResult<Vec<SubscriptionResponse>> {
-    // Load subscription plan subscriptions
-    let subscription_ids = SUBSCRIPTION_PLAN_SUBSCRIPTIONS.load(deps.storage, plan_id)?;
+    let limit = limit.unwrap_or(20) as usize;
+    let start_addr = maybe_addr(deps.api, start_after)?;
+    let start = start_addr.map(Bound::exclusive);
 
+    // Load subscription plan subscriptions
     // Load subscriptions for each subscription id
-    let subscriptions = subscription_ids
-        .iter()
-        .map(|id| {
-            let subscription = SUBSCRIPTIONS.load(deps.storage, *id)?;
+    let subscriptions = SUBSCRIPTION_PLAN_SUBSCRIPTIONS
+        .prefix(plan_id)
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (_, subscription_id) = item?;
+            let subscription = SUBSCRIPTIONS.load(deps.storage, subscription_id)?;
             Ok(SubscriptionResponse {
-                id: *id,
+                id: subscription_id,
                 data: subscription,
             })
         })

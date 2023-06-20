@@ -17,4 +17,7 @@ pub enum ContractError {
 
     #[error("Subscription is already expired")]
     AlreadyExpired {},
+
+    #[error("Subscription is already active")]
+    AlreadySubscribed {},
 }

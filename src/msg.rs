@@ -60,10 +60,18 @@ pub enum QueryMsg {
     Subscription { subscription_id: u64 },
     // Get all subscriptions owned by the given user
     #[returns(Vec<SubscriptionResponse>)]
-    UserSubscriptions { user_address: String },
+    UserSubscriptions {
+        user_address: String,
+        start_after: Option<u64>,
+        limit: Option<u8>,
+    },
     // Get all subscriptions for the given subscription plan
     #[returns(Vec<SubscriptionResponse>)]
-    SubscriptionPlanSubscriptions { plan_id: u64 },
+    SubscriptionPlanSubscriptions {
+        plan_id: u64,
+        start_after: Option<String>,
+        limit: Option<u8>,
+    },
     // Checks if the given user is subscribed to the given subscription plan
     #[returns(bool)]
     IsSubscribed { user_address: String, plan_id: u64 },

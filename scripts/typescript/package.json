@@ -16,7 +16,8 @@
     "typescript": "^5.1.3"
   },
   "scripts": {
+    "upload": "ts-node upload.ts",
     "start": "ts-node index.ts",
-    "upload": "ts-node upload.ts"
+    "query": "ts-node query.ts"
   }
 }

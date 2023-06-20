@@ -11,16 +11,25 @@ interface Response {
 const SUBSCRIPTION_HUB_CODE_ID = process.env.SUBSCRIPTION_HUB_CODE_ID || "";
 
 (async () => {
-  const { organizationClient, organizationAccount, userClient, userAccount } =
-    await getClientsAndAccounts();
+  const {
+    adminClient,
+    adminAccount,
+    organizationClient,
+    organizationAccount,
+    userClient,
+    userAccount,
+  } = await getClientsAndAccounts();
 
   const createNewSubscriptionHub = async () => {
-    const res = await organizationClient.instantiate(
-      organizationAccount.address,
+    const res = await adminClient.instantiate(
+      adminAccount.address,
       Number(SUBSCRIPTION_HUB_CODE_ID),
       {},
       "Subscription Hub",
-      "auto"
+      "auto",
+      {
+        admin: adminAccount.address,
+      }
     );
 
     console.log(

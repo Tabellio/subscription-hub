@@ -28,13 +28,13 @@ To compile the contract code and create the wasm file, run the following command
 ./scripts/optimize.sh
 ```
 
-To run the unit tests, run the following command:
+To run the tests, run the following command:
 
 ```bash
 cargo test
 ```
 
-To try out the contract take a look at the [TS scripts README file.](./scripts/ts/README.md)
+To try out the contract take a look at the [TS scripts README file](./scripts/ts/README.md)
 
 ## License
 

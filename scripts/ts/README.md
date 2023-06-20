@@ -16,7 +16,7 @@ Now you are ready to run the scripts!
 
 ### Upload Script
 
-> **Note**: You need to compile your contract before uploading it to the blockchain. Refer to the [Compile Script](../../README.md#getting-started) section for more information.
+> **Note**: You need to compile your contract before uploading it to the blockchain. Refer to the [Getting Started](../../README.md#getting-started) section for more information.
 
 After getting your wasm file, update the `WASM_FILE_PATH` variable in the `.env` file.
 

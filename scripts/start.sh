@@ -1,2 +1,2 @@
-cd scripts/typescript
+cd scripts/ts
 yarn start

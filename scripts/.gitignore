@@ -1,4 +1,4 @@
-/typescript/.env
-/typescript/.*.env
+/ts/.env
+/ts/.*.env
 
-/typescript/node_modules
+/ts/node_modules

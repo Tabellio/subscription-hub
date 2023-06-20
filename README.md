@@ -20,6 +20,22 @@ Subscription Hub is a decentralized application (dApp) that allows projects and 
 
 - **Native and CW20 Tokens**: Support for native tokens and CW20 tokens, allowing projects to accept payments in different currencies.
 
+## Getting Started
+
+To compile the contract code and create the wasm file, run the following command:
+
+```bash
+./scripts/optimize.sh
+```
+
+To run the unit tests, run the following command:
+
+```bash
+cargo test
+```
+
+To try out the contract take a look at the [TS scripts README file.](./scripts/ts/README.md)
+
 ## License
 
 This project is licensed under the [Apache License, Version 2.0](./LICENSE). Feel free to use, modify, and distribute this project in accordance with the terms of the license.
